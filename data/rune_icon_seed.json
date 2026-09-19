@@ -1,0 +1,262 @@
+[
+  {
+    "name": "Electrocuting Rune",
+    "mods": [
+      "Extra Lightning Damage",
+      "Lightning Damage Electrocutes",
+      "Shocked Ground Trails"
+    ],
+    "icon_file": "seed_icons/electrocuting.webp"
+  },
+  {
+    "name": "Cyclonic Rune",
+    "mods": [
+      "Chance to inflict Exposure on Hit",
+      "Armour Break on Hit",
+      "Wither on Hit"
+    ],
+    "icon_file": "seed_icons/cyclonic.webp"
+  },
+  {
+    "name": "Arcane Rune",
+    "mods": [
+      "Extra Energy Shield",
+      "Trigger a Stunning nova when Energy Shield is depleted"
+    ],
+    "icon_file": "seed_icons/arcane.webp"
+  },
+  {
+    "name": "Vision Rune",
+    "mods": [
+      "Reflect Curses",
+      "Chance to Reflect Shock",
+      "Chance to Reflect Chill"
+    ],
+    "icon_file": "seed_icons/vision.webp"
+  },
+  {
+    "name": "Rebirth Rune",
+    "mods": [
+      "Chance to Rebirth on death"
+    ],
+    "icon_file": "seed_icons/rebirth.webp"
+  },
+  {
+    "name": "Lightning Rune",
+    "mods": [
+      "Extra Lightning Damage"
+    ],
+    "icon_file": "seed_icons/lightning.webp"
+  },
+  {
+    "name": "Prismatic Rune",
+    "mods": [
+      "All Damage can Shock",
+      "All Damage can Chill",
+      "All Damage can Ignite",
+      "Increased Elemental Resistances"
+    ],
+    "icon_file": "seed_icons/prismatic.webp"
+  },
+  {
+    "name": "Wisdom Rune",
+    "mods": [
+      "Increased Experience"
+    ],
+    "icon_file": "seed_icons/wisdom.webp"
+  },
+  {
+    "name": "Celestial Rune",
+    "mods": [
+      "Chance for a Fire Explosion on Death",
+      "Chance for a Cold Explosion on Death",
+      "Chance for a Lightning Explosion on Death"
+    ],
+    "icon_file": "seed_icons/celestial.webp"
+  },
+  {
+    "name": "Momentum Rune",
+    "mods": [
+      "Increased Movement Speed",
+      "Movement Speed Cannot be Slowed below base"
+    ],
+    "icon_file": "seed_icons/momentum.webp"
+  },
+  {
+    "name": "Tempest Rune",
+    "mods": [
+      "Cannot be Shocked or Chilled",
+      "All Damage contributes to chance to Shock and Chill Magnitude"
+    ],
+    "icon_file": "seed_icons/tempest.webp"
+  },
+  {
+    "name": "Opulent Rune",
+    "mods": [
+      "Increased Monster Rarity"
+    ],
+    "icon_file": "seed_icons/opulent.webp"
+  },
+  {
+    "name": "Tidal Rune",
+    "mods": [
+      "Remnant gains:",
+      "Conjures Tidal Waves"
+    ],
+    "icon_file": "seed_icons/tidal.webp"
+  },
+  {
+    "name": "Adaptive Rune",
+    "mods": [
+      "Adaptation"
+    ],
+    "icon_file": "seed_icons/adaptive.webp"
+  },
+  {
+    "name": "Fire Rune",
+    "mods": [
+      "Extra Fire Damage"
+    ],
+    "icon_file": "seed_icons/fire.webp"
+  },
+  {
+    "name": "Cold Rune",
+    "mods": [
+      "Extra Cold Damage"
+    ],
+    "icon_file": "seed_icons/cold.webp"
+  },
+  {
+    "name": "Protective Rune",
+    "mods": [
+      "Periodically gain Verisium Proximity Shields"
+    ],
+    "icon_file": "seed_icons/protective.webp"
+  },
+  {
+    "name": "Moon Rune",
+    "mods": [
+      "Remnant gains:",
+      "Conjures moon beams"
+    ],
+    "icon_file": "seed_icons/moon.webp"
+  },
+  {
+    "name": "Stone Rune",
+    "mods": [
+      "Armoured",
+      "Increased Stun Threshold",
+      "Earthly Prison"
+    ],
+    "icon_file": "seed_icons/stone.webp"
+  },
+  {
+    "name": "Bloodletting Rune",
+    "mods": [
+      "Life Leech",
+      "Cannot have Life Leeched from",
+      "Inflicts Corrupted Blood on Hit"
+    ],
+    "icon_file": "seed_icons/bloodletting.webp"
+  },
+  {
+    "name": "Rage Rune",
+    "mods": [
+      "Periodically Enrage"
+    ],
+    "icon_file": "seed_icons/rage.webp"
+  },
+  {
+    "name": "Volcanic Rune",
+    "mods": [
+      "Extra Fire Damage",
+      "All Damage can Ignite",
+      "Ignited Ground Trails"
+    ],
+    "icon_file": "seed_icons/gasp.webp"
+  },
+  {
+    "name": "Toxic Rune",
+    "mods": [
+      "Chance to Poison on Hit",
+      "Chance for Toxic Volatiles on death",
+      "All Damage from Hits Contributes to Poison Magnitude"
+    ],
+    "icon_file": "seed_icons/toxic.webp"
+  },
+  {
+    "name": "Power Rune",
+    "mods": [
+      "Empowered"
+    ],
+    "icon_file": "seed_icons/power.webp"
+  },
+  {
+    "name": "Soul Rune",
+    "mods": [
+      "Union of Souls"
+    ],
+    "icon_file": "seed_icons/soul.webp"
+  },
+  {
+    "name": "Sky Rune",
+    "mods": [
+      "Remnant gains:",
+      "Conjures Elemental Tornados"
+    ],
+    "icon_file": "seed_icons/sky.webp"
+  },
+  {
+    "name": "Death Rune",
+    "mods": [
+      "Slain Monsters may merge into stronger Monsters"
+    ],
+    "icon_file": "seed_icons/death.webp"
+  },
+  {
+    "name": "Oath Rune",
+    "mods": [
+      "A Monster summons Allies"
+    ],
+    "icon_file": "seed_icons/oath.webp"
+  },
+  {
+    "name": "Bond Rune",
+    "mods": [
+      "Rare Monsters may transfer a Mod on death",
+      "Remnant gains:",
+      "Increased chance to spawn Rare Monsters",
+      "Rare Monsters have more Monster Modifiers"
+    ],
+    "icon_file": "seed_icons/bond.webp"
+  },
+  {
+    "name": "Ward Rune",
+    "mods": [
+      "Protected by Runic Ward"
+    ],
+    "icon_file": "seed_icons/ward.webp"
+  },
+  {
+    "name": "Time Rune",
+    "mods": [
+      "Slain Monsters may respawn as a higher Rarity"
+    ],
+    "icon_file": "seed_icons/time.webp"
+  },
+  {
+    "name": "Life Rune",
+    "mods": [
+      "Shared Life"
+    ],
+    "icon_file": "seed_icons/life.webp"
+  },
+  {
+    "name": "Earth Rune",
+    "mods": [
+      "Remnant gains:",
+      "Conjures Earthly Spires"
+    ],
+    "icon_file": "seed_icons/earth.webp"
+  }
+]

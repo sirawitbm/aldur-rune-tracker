@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+data/session.json
+data/history.jsonl
+data/positions.json
+data/captured_icons/
+data/icon_library.json
+data/icon_library/
+data/ocr_aliases.json
+data/last_capture_debug.png
+data/last_capture_icon_debug.png
+run.log
+build/
+dist/
+*.spec

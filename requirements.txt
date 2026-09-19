@@ -1,0 +1,4 @@
+pynput
+Pillow
+PySide6
+winocr

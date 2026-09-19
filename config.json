@@ -1,0 +1,18 @@
+{
+  "record_hotkey": "<ctrl>+3",
+  "undo_hotkey": "<ctrl>+4",
+  "capture_delay_ms": 150,
+  "capture_width": 900,
+  "capture_height": 700,
+  "capture_offset_x": 0,
+  "capture_offset_y": 0,
+  "icon_crop_size": 60,
+  "overlay_icon_size": 36,
+  "toast_position": "cursor",
+  "ocr_lang": "en",
+  "client_log_path": null,
+  "log_poll_interval_sec": 0.5,
+  "overlay_max_visible": 24,
+  "map_popup_timeout_sec": 12,
+  "data_dir": "data"
+}
