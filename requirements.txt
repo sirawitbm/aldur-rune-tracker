@@ -2,3 +2,4 @@ pynput
 Pillow
 PySide6
 winocr
+opencv-python-headless

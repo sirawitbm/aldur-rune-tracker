@@ -1,4 +1,4 @@
-"""Parses a Grand Expedition remnant-rune tooltip via OCR.
+"""Reads a Grand Expedition rune tooltip for identity and passability.
 
 There is no fixed database to match against here (unlike a normal item
 list, these are dynamically-composed modifier combos) so we just read the
@@ -11,8 +11,9 @@ Tooltip layout (from an in-game screenshot), top to bottom:
     Monsters gain:                                  <- (ignored)
     Extra Lightning Damage                          <- (ignored)
     ...
-    The Runic Modifier in this slot will be added   <- "passable" marker
-    to all Monsters unearthed after this Remnant
+The yellow visual marker is the preferred passability signal, but its
+ornate slot-top styling can blend into the frame. The explicit tooltip
+sentence is therefore retained as an independent fallback.
 """
 import re
 from dataclasses import dataclass
@@ -22,16 +23,10 @@ from PIL import Image
 
 from .config import CONFIG
 
-# Distinctive phrase GGG uses on whichever slot carries forward to the next
-# Remnant. Matched loosely (both key fragments, case-insensitive) so minor
-# OCR noise doesn't break detection.
-_PASSABLE_FRAGMENTS = ("unearthed", "remnant")
-
-
 @dataclass
 class ParsedTooltip:
     name: str | None
-    is_passable: bool
+    has_passable_text: bool
     raw_lines: list[str]
 
 
@@ -65,11 +60,7 @@ def _clean_name(raw: str) -> str:
 def parse_tooltip(image: Image.Image) -> ParsedTooltip:
     lines = _ocr_lines(image)
     if not lines:
-        return ParsedTooltip(name=None, is_passable=False, raw_lines=[])
-
-    is_passable = any(
-        all(frag in line.lower() for frag in _PASSABLE_FRAGMENTS) for line in lines
-    ) or _spans_passable_phrase(lines)
+        return ParsedTooltip(name=None, has_passable_text=False, raw_lines=[])
 
     # Every one of these rune names ends in "Rune" - prefer a line matching
     # that pattern over blindly trusting "topmost line", since a generous
@@ -86,13 +77,17 @@ def parse_tooltip(image: Image.Image) -> ParsedTooltip:
     # garbage text, which is far worse than one bad capture.
     name_line = next((l for l in lines if l.lower().endswith("rune")), None)
     name = _clean_name(name_line) if name_line else None
-    return ParsedTooltip(name=name, is_passable=is_passable, raw_lines=lines)
+    return ParsedTooltip(
+        name=name,
+        has_passable_text=_contains_passable_phrase(lines),
+        raw_lines=lines,
+    )
 
 
-def _spans_passable_phrase(lines: list[str]) -> bool:
-    """The marker sentence wraps across 2 OCR lines - check the joined text too."""
-    joined = " ".join(lines).lower()
-    joined = re.sub(r"\s+", " ", joined)
-    return "unearthed after this remnant" in joined or (
-        "runic modifier" in joined and "added" in joined and "remnant" in joined
+def _contains_passable_phrase(lines: list[str]) -> bool:
+    joined = re.sub(r"\s+", " ", " ".join(lines).lower())
+    return (
+        "unearthed after this remnant" in joined
+        or ("runic modifier" in joined and "added" in joined and "remnant" in joined)
+        or ("all monsters" in joined and "after this remnant" in joined)
     )

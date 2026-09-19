@@ -9,7 +9,10 @@ data/icon_library/
 data/ocr_aliases.json
 data/last_capture_debug.png
 data/last_capture_icon_debug.png
+data/last_detection_debug.png
+data/recognition_samples/
 run.log
 build/
 dist/
 *.spec
+.preserve_*/

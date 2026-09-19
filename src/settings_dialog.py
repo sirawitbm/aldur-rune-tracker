@@ -1,5 +1,6 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit,
+    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit,
     QMessageBox, QPushButton, QSpinBox, QVBoxLayout,
 )
 
@@ -14,9 +15,11 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("PoE2 Rune Tracker - Settings")
         self.setModal(True)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
 
         self.hotkey_btn = HotkeyCaptureButton(CONFIG.record_hotkey)
         self.undo_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "undo_hotkey", "<f8>"))
+        self.hide_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "hide_hotkey", "<ctrl>+5"))
         self.capture_delay = self._spin(0, 1000, getattr(CONFIG, "capture_delay_ms", 150))
 
         self.log_path_edit = QLineEdit(CONFIG.client_log_path or "")
@@ -38,9 +41,16 @@ class SettingsDialog(QDialog):
         self.toast_position.addItems(["cursor", "bottom", "top", "center"])
         self.toast_position.setCurrentText(getattr(CONFIG, "toast_position", "cursor"))
 
+        self.collect_samples = QCheckBox("Save captures for accuracy calibration")
+        self.collect_samples.setChecked(getattr(CONFIG, "collect_recognition_samples", False))
+        self.collect_samples.setToolTip(
+            "Stores the captured screen region and recognition result under data/recognition_samples."
+        )
+
         form = QFormLayout()
         form.addRow("Capture hotkey:", self.hotkey_btn)
         form.addRow("Undo-last hotkey:", self.undo_hotkey_btn)
+        form.addRow("Show/hide hotkey:", self.hide_hotkey_btn)
         form.addRow("Capture delay (ms):", self.capture_delay)
         form.addRow("Client.txt path:", log_row)
         form.addRow("Capture width:", self.capture_w)
@@ -50,6 +60,7 @@ class SettingsDialog(QDialog):
         form.addRow("Icon crop size (capture):", self.icon_crop_size)
         form.addRow("Icon size (on overlay):", self.overlay_icon_size)
         form.addRow("Capture toast position:", self.toast_position)
+        form.addRow("Diagnostics:", self.collect_samples)
 
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self._on_save)
@@ -78,10 +89,11 @@ class SettingsDialog(QDialog):
             self.log_path_edit.setText(path)
 
     def _on_save(self):
-        if self.hotkey_btn.value == self.undo_hotkey_btn.value:
+        hotkeys = [self.hotkey_btn.value, self.undo_hotkey_btn.value, self.hide_hotkey_btn.value]
+        if len(set(hotkeys)) != len(hotkeys):
             QMessageBox.warning(
                 self, "Hotkey conflict",
-                "Capture hotkey and Undo-last hotkey can't be the same key.",
+                "Capture, undo, and show/hide hotkeys must be different.",
             )
             return
         self.accept()
@@ -90,6 +102,7 @@ class SettingsDialog(QDialog):
         """Writes the dialog's values into CONFIG and persists them. Call after exec() == Accepted."""
         CONFIG.set("record_hotkey", self.hotkey_btn.value)
         CONFIG.set("undo_hotkey", self.undo_hotkey_btn.value)
+        CONFIG.set("hide_hotkey", self.hide_hotkey_btn.value)
         CONFIG.set("capture_delay_ms", self.capture_delay.value())
         CONFIG.set("client_log_path", self.log_path_edit.text().strip() or None)
         CONFIG.set("capture_width", self.capture_w.value())
@@ -99,4 +112,5 @@ class SettingsDialog(QDialog):
         CONFIG.set("icon_crop_size", self.icon_crop_size.value())
         CONFIG.set("overlay_icon_size", self.overlay_icon_size.value())
         CONFIG.set("toast_position", self.toast_position.currentText())
+        CONFIG.set("collect_recognition_samples", self.collect_samples.isChecked())
         CONFIG.save()

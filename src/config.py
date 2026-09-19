@@ -14,6 +14,7 @@ CONFIG_PATH = ROOT / "config.json"
 DEFAULT_CONFIG = {
     "record_hotkey": "<ctrl>+3",
     "undo_hotkey": "<ctrl>+4",
+    "hide_hotkey": "<ctrl>+5",
     "capture_delay_ms": 150,
     "capture_width": 900,
     "capture_height": 700,
@@ -22,10 +23,10 @@ DEFAULT_CONFIG = {
     "icon_crop_size": 60,
     "overlay_icon_size": 36,
     "toast_position": "cursor",
+    "collect_recognition_samples": False,
     "ocr_lang": "en",
     "client_log_path": None,
     "log_poll_interval_sec": 0.5,
-    "overlay_max_visible": 24,
     "map_popup_timeout_sec": 12,
     "data_dir": "data",
 }

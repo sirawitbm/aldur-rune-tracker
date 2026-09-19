@@ -26,6 +26,7 @@ class NamePromptDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Which rune is this?")
         self.setModal(True)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
 
         label = QLabel(
             "Unrecognized icon - pick its name from the list\n"
@@ -83,6 +84,7 @@ class DisambiguationDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Which rune is this?")
         self.setModal(True)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
         self._chosen = None
 
         label = QLabel("Close match - click the correct one:")

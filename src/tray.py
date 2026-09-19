@@ -1,25 +1,7 @@
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
-
-def _make_icon() -> QIcon:
-    """A small generated glyph - keeps the app self-contained, no asset file."""
-    pm = QPixmap(64, 64)
-    pm.fill(QColor(0, 0, 0, 0))
-    p = QPainter(pm)
-    p.setRenderHint(QPainter.Antialiasing)
-    p.setBrush(QColor(60, 120, 220))
-    p.setPen(QColor(20, 40, 80))
-    p.drawEllipse(4, 4, 56, 56)
-    p.setPen(QColor(255, 255, 255))
-    font = p.font()
-    font.setBold(True)
-    font.setPointSize(28)
-    p.setFont(font)
-    p.drawText(pm.rect(), Qt.AlignCenter, "R")
-    p.end()
-    return QIcon(pm)
+from src.resources import app_icon
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -29,7 +11,7 @@ class TrayIcon(QSystemTrayIcon):
     quit_requested = Signal()
 
     def __init__(self, parent=None):
-        super().__init__(_make_icon(), parent)
+        super().__init__(app_icon(), parent)
         self.setToolTip("PoE2 Rune Tracker")
 
         menu = QMenu()

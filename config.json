@@ -1,6 +1,7 @@
 {
   "record_hotkey": "<ctrl>+3",
   "undo_hotkey": "<ctrl>+4",
+  "hide_hotkey": "<ctrl>+5",
   "capture_delay_ms": 150,
   "capture_width": 900,
   "capture_height": 700,
@@ -12,7 +13,6 @@
   "ocr_lang": "en",
   "client_log_path": null,
   "log_poll_interval_sec": 0.5,
-  "overlay_max_visible": 24,
   "map_popup_timeout_sec": 12,
   "data_dir": "data"
 }

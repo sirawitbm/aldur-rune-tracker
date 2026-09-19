@@ -1,5 +1,11 @@
 # PoE2 Grand Expedition Rune Tracker
 
+<p align="center">
+  <img src="data/RA.jpg" width="180" alt="PoE2 Rune Tracker logo">
+</p>
+
+**Current release: v0.1.0 (Windows portable)**
+
 Tracks the Aldur Runes you pick up while walking the Remnants in PoE2's
 Grand Expedition content. During the setup phase you walk to each Remnant
 and choose a rune combination; whichever slot is marked as carrying
@@ -18,12 +24,15 @@ passable slot.**
    this slot will be added to all Monsters unearthed after this
    Remnant."*).
 2. Press the hotkey (`Ctrl+3` by default, global via `pynput`).
-3. The app grabs a screenshot region around your cursor and identifies the
-   rune. **The screen is only ever the input used to figure out which
+3. The app grabs a screenshot region around your cursor and checks for the
+  explicit "Runic Modifier ... will be added" tooltip sentence. That text
+  is the passability authority; the subtle yellow slot decoration is used
+  only as an optional icon-crop alignment hint. The app then identifies the
+  rune. **The screen is only ever the input used to figure out which
    rune it is - the name, icon, and effect text you actually see always
    come from a prepared database, never from what was read off the
-   screen.** In priority order:
-   - **Image similarity (primary)**: the small icon crop at your cursor is
+    screen.** It combines these signals:
+    - **Image similarity**: the cursor-centered or marker-aligned icon crop is
      compared by appearance against a local icon library, pre-seeded with
      all 33 known Remnant rune icons scraped from individual poe2db.tw
      pages (`tools/scrape_remnant_runes.py` -> `data/rune_icon_seed.json` +
@@ -32,10 +41,8 @@ passable slot.**
      exactly these 33 - a 34th, "Bait Rune", is deliberately excluded: it
      shares Power Rune's icon verbatim on poe2db and has never actually
      been seen in-game, so it's treated as a wiki data error). A confident
-     match wins immediately, using that entry's database name/icon/effect
-     text.
-   - **OCR as a lookup key (secondary)**: only if image matching isn't
-     confident. Windows' built-in OCR (`winocr`) reads whatever text is in
+     match supplies that entry's database name/icon/effect text.
+   - **OCR as an independent lookup key**: Windows' built-in OCR (`winocr`) reads whatever text is in
      the tooltip, but that text is *never shown or stored* - it's only
      used to look up the closest matching name in the same database
      (fuzzy string match, tolerant of OCR noise like a dropped letter or a
@@ -75,12 +82,8 @@ passable slot.**
      that rune an easier false match for the *next* capture too, snowballing
      within a couple of presses into "every capture becomes the same wrong
      rune." Fixed - see the icon library section below.)
-   - Separately, the app checks whether the "will be added to all Monsters
-     unearthed after this Remnant" sentence is present in the tooltip, to
-     confirm this was the passable slot. This *can't* come from the
-     database - it's per-instance state (which slot you're looking at
-     right now), not a property of "Soul Rune" in general - so it's the
-     one thing genuinely read fresh off the screen every time.
+   - If an exact OCR result conflicts with image matching, the app asks
+     which result is correct instead of silently accepting either signal.
    - If image matching finds two (or more) icons scored suspiciously close
      to each other - a couple of the visually-similar "rare tier" purple
      icons, say - it declines to silently pick one. If OCR doesn't resolve
@@ -91,23 +94,17 @@ passable slot.**
      "none of these" falls through to the full 33-name list - and, having
      been asked and declined, does *not* then quietly use that fuzzy OCR
      guess anyway; that would defeat the point of asking.
-4. A brief toast confirms what was just captured (its name, or a red
-   warning if it wasn't the passable slot) - by default it appears right
+4. A brief toast confirms a newly passed rune, reports a duplicate, or
+  warns when the passability sentence is absent - by default it appears right
    next to your cursor (where you were already looking), or pinned to the
    top/bottom/center of the screen if you set `toast_position` to that in
    Settings.
-5. The capture is added to the running list on the right side of the
-   screen as a compact icon - always the **clean database icon**, never
-   the raw (often noisy, transparent-background) screenshot crop. Hover it
-   to see its name and effect text (also from the database) - nothing else
-   is shown unless you hover, to keep a 9+ entry chain from taking over
-   the screen. This hover works even while the overlay is
-   locked/click-through in normal play - it's driven by polling the cursor
-   position against each icon's screen position rather than native Qt
-   hover events, since a click-through window never receives mouse events
-   at all. A red **!** appears next to any capture that was **not**
-   confirmed passable (meaning it won't actually carry to the next
-   Remnant - you probably hovered the wrong slot).
+5. A newly identified passable rune is added to the list on the right side
+  of the screen as a compact clean database icon. Each rune name appears
+  only once: capturing it again reports **already tracked**, because a
+  duplicate rune adds no reward. Hover an icon to see its database name
+  and effect text. Hover works while the overlay is locked/click-through
+  by polling the cursor position against each icon's screen position.
 
    To fix a bad capture immediately, press the **undo-last hotkey**
    (`Ctrl+4` by default) - no need to unlock/click anything, it just pops the
@@ -115,6 +112,10 @@ passable slot.**
    specifically, click the small **x** next to it instead (see "Moving
    the overlay" below - that one needs the overlay unlocked, since a
    click-through window can't receive clicks by definition).
+
+  Press **Ctrl+5** to hide every tracker window without stopping the app.
+  Press it again to restore exactly the windows that were visible. Capture
+  and undo hotkeys are ignored while hidden.
 
 ## Reset behavior
 
@@ -148,19 +149,48 @@ no need to relaunch the app. The tray menu also has **Undo last capture**,
 
 ## Running it
 
-Either from source:
+### Download the portable release
+
+Download the Windows ZIP and matching `.sha256` file from the repository's
+**Releases** page. Verify it before opening:
+
+```powershell
+Get-FileHash .\PoE2RuneTracker-v0.1.0-windows-x64.zip -Algorithm SHA256
+Get-Content .\PoE2RuneTracker-v0.1.0-windows-x64.zip.sha256
+```
+
+The two hashes must match. Scan the ZIP with Microsoft Defender, extract the
+entire folder, and run `PoE2RuneTracker.exe`. Keep the folder together; the
+executable depends on its `_internal` directory. No Python installation or
+administrator access is required.
+
+This first release is portable rather than an installer. It writes
+`config.json` and its `data` folder beside the executable, so uninstalling is
+just quitting the tray app and deleting its folder. Back up that folder first
+if you want to retain settings or learned recognition data.
+
+Windows SmartScreen may warn about a new, unsigned application. The project
+does not yet have a commercial code-signing certificate. Do not disable your
+security software; download only from this repository's Releases page, verify
+the SHA-256 file, and scan the archive. The app does not require elevation and
+its runtime has no network calls. It reads screen pixels, registered global
+hotkeys, and the configured local PoE `Client.txt`; optional calibration
+screenshots remain local.
+
+### Run from source
 
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
 
-...or as a standalone double-click-able exe - see "Building the .exe"
-below. Either way, `Client.txt` is auto-detected from common Steam/GGG
+`Client.txt` is auto-detected from common Steam/GGG
 paths on first run; if it's not found, set it from the Settings dialog
 (tray icon) instead of hand-editing `config.json`.
 
-## Building the .exe
+## Building a release
+
+Build the local application folder:
 
 ```powershell
 .\build.ps1
@@ -168,18 +198,63 @@ paths on first run; if it's not found, set it from the Settings dialog
 
 This installs `pyinstaller` and produces `dist\PoE2RuneTracker\` - a
 folder containing `PoE2RuneTracker.exe` plus its dependencies. Copy the
-whole folder wherever you like and double-click the exe; `config.json` and
-`data/` are created next to it on first run (not buried inside the
-bundle), so Settings changes and your capture history persist normally
-across runs. Re-run `build.ps1` after any code change to rebuild.
+whole folder for local testing. Local rebuilds preserve `config.json` and
+`data/`, so Settings changes and capture history survive.
 
-There's no installer/shortcut/autostart setup here - just the exe. Ask if
-you want Start Menu shortcuts or launch-at-login added.
+Create the clean shareable ZIP and SHA-256 file:
+
+```powershell
+.\release.ps1 -Version 0.1.0
+```
+
+Artifacts are written to `dist\release\`. The release script builds in a
+temporary staging directory and explicitly rejects top-level `config.json`
+or `data/` entries, preventing local paths, screenshots, history, learned
+aliases, and calibration samples from being shared. Do not manually zip the
+local `dist\PoE2RuneTracker` folder because that folder intentionally retains
+your runtime data.
+
+Pushing a semantic version tag such as `v0.1.0` runs
+`.github/workflows/release.yml`, builds on GitHub's Windows runner, uploads the
+portable archive and checksum, and creates the GitHub Release automatically.
+
+## Development workflow
+
+`main` is the release branch. Future work should start from an up-to-date
+feature branch and reach `main` through a pull request:
+
+```powershell
+git switch main
+git pull --ff-only
+git switch -c feature/short-description
+# make changes, then run: python -m unittest discover -s tests -v
+git push -u origin feature/short-description
+```
+
+Open a pull request, review the diff and test results, then squash or merge it.
+Delete the feature branch after merging. For releases, update the version and
+README, merge that release PR, then tag the merge commit:
+
+```powershell
+git switch main
+git pull --ff-only
+git tag -a v0.1.0 -m "PoE2 Rune Tracker v0.1.0"
+git push origin v0.1.0
+```
+
+In GitHub repository settings, protect `main`: require a pull request before
+merging, require the release/test status checks once configured, and block
+force pushes. Branch protection is a repository setting and is not changed by
+this codebase.
+
+An installer can be added later after obtaining a trusted Windows code-signing
+certificate. For v0.1.0, the transparent portable archive is the lower-risk
+way to share the app.
 
 ## Tuning (config.json, or Settings from the tray icon)
 
-- `record_hotkey` / `undo_hotkey` - pynput hotkey strings, e.g.
-  `"<ctrl>+3"` / `"<ctrl>+4"`. Easiest to set via the Settings dialog
+- `record_hotkey` / `undo_hotkey` / `hide_hotkey` - pynput hotkey strings,
+  defaulting to `"<ctrl>+3"`, `"<ctrl>+4"`, and `"<ctrl>+5"`. Easiest to set via the Settings dialog
   instead of editing these by hand.
 - `capture_delay_ms` (default 150) - waits this long after the hotkey
   before actually grabbing the screen. Games commonly have a short hover
@@ -287,12 +362,27 @@ compounding within a couple of presses into every subsequent capture (of
 any rune) misidentifying as that one contaminated entry. Fixed by gating
 history growth on `trust_visual` in `identify()`/`register_capture()`.
 
-Calibrated against all 33 real seed icons composited onto several
+The synthetic regression battery covers all 33 seed icons composited onto
 simulated backgrounds with brightness and resize-jitter variation (792
-cases - `tools/accuracy_benchmark.py`, safe to re-run after any matching
-change): true matches scored up to ~115 (out of a 0-765 scale), the worst
-confusion among the purple family scored 172+ - `MATCH_THRESHOLD` in
-`src/icon_db.py` sits comfortably in that gap.
+cases in `tools/accuracy_benchmark.py`). It catches matcher regressions,
+but it is **not a measurement of live-game accuracy**.
+
+## Measuring live-game accuracy
+
+Enable **Save captures for accuracy calibration** in Settings, then use
+the tracker across different maps, resolutions, UI scales, and rune tiers.
+Captures are stored locally under `data/recognition_samples/`. Collection
+is disabled by default because those images may contain nearby UI or chat.
+
+Review and correct the predictions, then run the real-data benchmark:
+
+```bash
+python tools/review_recognition_samples.py
+python tools/real_accuracy_benchmark.py
+```
+
+The benchmark reports passability recall/specificity and rune identity
+accuracy using only samples that have been reviewed.
 
 To add more seeded runes later (if GGG adds new Remnant rune types):
 inspect the `RemnantRune*`/`RemnantRareRune*` icon filenames referenced in
@@ -322,18 +412,13 @@ doesn't already have.
    find a confident match - when *both* fail, you get the manual-pick
    popup rather than a wrong guess. This is intentional: the app would
    rather ask once than silently show something incorrect.
-3. **Passable detection** relies on OCR correctly reading the phrase
-   "unearthed after this Remnant" - matched loosely (both key words
-   present, joined across OCR line breaks) to tolerate minor OCR noise.
-   There's no image-based fallback for this one (it's not visible on the
-   icon itself), so a badly-misaligned capture that finds no text at all
-   also can't confirm passable status - it'll register the rune (via image
-   match) but always as "not confirmed passable" in that case.
-4. **Image matching is calibrated against simulated capture conditions**
-   (all 33 real seed icons composited onto several synthetic backgrounds
-   with brightness/resize-jitter variation - 792/792 correct via
-   `tools/accuracy_benchmark.py`), but hasn't been validated against an
-   actual PoE2 screenshot yet. If it ever misidentifies one rune as another
+3. **Passable detection** uses the explicit carry-forward sentence in the
+  tooltip. In the first 55-capture field set it separated all 24 passable
+  captures from all 31 non-passable captures. Yellow decoration detection
+  remains only an optional crop-alignment hint, not an acceptance signal.
+4. **Image matching has a synthetic regression benchmark**, but it has not
+   yet been calibrated against enough verified PoE2 screenshots. If it
+   misidentifies one rune as another
    - as opposed to just failing to match at all, which is the safe failure
    mode - that's a sign `MATCH_THRESHOLD` in `src/icon_db.py` needs
    tightening; if it fails to match things that should match, loosening it
@@ -351,7 +436,9 @@ doesn't already have.
 ```
 main.py                     entry point - wires hotkey/log watcher/overlay/tray together
 build.ps1                    PyInstaller build script -> dist/PoE2RuneTracker/
+release.ps1                  clean portable ZIP + SHA-256 release builder
 config.json                  all tunables (editable directly, or via Settings)
+data/RA.jpg / data/RA.ico    app logo and Windows executable icon
 data/rune_icon_seed.json      checked-in seed data (name/mods/icon) for all 33 known runes
 data/seed_icons/*.webp        checked-in seed icons, scraped from poe2db.tw
 data/icon_library.json        the LIVE, self-growing icon library - per-entry signature HISTORY (auto-created)
@@ -363,8 +450,11 @@ data/captured_icons/*.png    per-entry icon copies shown in the overlay (auto-cr
 data/positions.json          remembered overlay window positions (auto-created)
 tools/scrape_remnant_runes.py one-off scraper -> data/rune_icon_seed.json + seed_icons/
 tools/accuracy_benchmark.py   synthetic image-matching accuracy test, re-run after matching changes
+tools/review_recognition_samples.py verify labels on collected gameplay samples
+tools/real_accuracy_benchmark.py passability + identity accuracy on verified gameplay samples
 src/capture.py                cursor-centered screenshot grab + icon crop
-src/tooltip_parse.py          OCR -> name-guess (a DB lookup key, never shown) + passable-flag
+src/rune_vision.py            yellow-marker detection + marker-aligned icon crop
+src/tooltip_parse.py          OCR -> name guess (a DB lookup key, never shown)
 src/icon_db.py                 the self-growing icon library: appearance matching + display assets
 src/name_prompt.py            NamePromptDialog (last resort, full list) + DisambiguationDialog (close call, one-click)
 src/log_watcher.py            Client.txt tail + area-type classification, live-restartable

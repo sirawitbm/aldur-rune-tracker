@@ -16,6 +16,12 @@ class RecordedRune:
     icon_file: str  # relative to data_dir
 
 
+@dataclass(frozen=True)
+class TrackResult:
+    entry: RecordedRune
+    added: bool
+
+
 class TrackerState:
     def __init__(self):
         self.entries: list[RecordedRune] = []
@@ -24,7 +30,11 @@ class TrackerState:
         self._load_session()
 
     # -- mutation -----------------------------------------------------
-    def add(self, name: str, is_passable: bool, icon: Image.Image) -> RecordedRune:
+    def add_passable(self, name: str, icon: Image.Image) -> TrackResult:
+        existing = next((entry for entry in self.entries if entry.name.lower() == name.lower()), None)
+        if existing is not None:
+            return TrackResult(existing, added=False)
+
         CONFIG.captured_icons_dir  # ensures the folder exists before writing into it
         icon_filename = f"captured_icons/{uuid.uuid4().hex}.png"
         icon.save(CONFIG.data_dir / icon_filename)
@@ -32,12 +42,12 @@ class TrackerState:
         entry = RecordedRune(
             ts=time.time(),
             name=name,
-            is_passable=is_passable,
+            is_passable=True,
             icon_file=icon_filename,
         )
         self.entries.append(entry)
         self._save_session()
-        return entry
+        return TrackResult(entry, added=True)
 
     def remove(self, icon_file: str):
         """Discard a single captured entry (identified by its unique icon file)."""
@@ -83,7 +93,9 @@ class TrackerState:
             "map_started_at": self.map_started_at,
             "entries": [asdict(e) for e in self.entries],
         }
-        CONFIG.session_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        temporary_path = CONFIG.session_path.with_suffix(".json.tmp")
+        temporary_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        temporary_path.replace(CONFIG.session_path)
 
     def _load_session(self):
         if not CONFIG.session_path.exists():
@@ -95,10 +107,18 @@ class TrackerState:
             # Tolerate old session files with now-removed fields (e.g. a
             # dropped "description" column) instead of crashing on load.
             valid_keys = {f.name for f in fields(RecordedRune)}
-            self.entries = [
+            loaded = [
                 RecordedRune(**{k: v for k, v in e.items() if k in valid_keys})
                 for e in data.get("entries", [])
             ]
+            seen_names = set()
+            self.entries = []
+            for entry in loaded:
+                key = entry.name.lower()
+                if not entry.is_passable or key in seen_names:
+                    continue
+                seen_names.add(key)
+                self.entries.append(entry)
         except Exception:
             pass
 

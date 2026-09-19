@@ -15,11 +15,8 @@ to figure out *which* database entry you're looking at:
 3. If neither finds a confident answer, the user picks a name once from
    the same prepared list (see name_prompt.py) - never free-typed info.
 
-The one thing that can never come from this database: whether a specific
-capture was in the "passable" slot. That's per-instance game state (which
-slot you were looking at, not a property of "Soul Rune" in general), not
-a database fact, so it's read from the tooltip text at capture time - see
-tooltip_parse.py.
+Passability is per-instance game state, so rune_vision.py detects the
+yellow marker above the hovered rune before this identity matcher runs.
 
 Matching is a masked average color difference, not a generic perceptual
 hash: the poe2db seed icons are transparent-background PNGs/WebPs, while

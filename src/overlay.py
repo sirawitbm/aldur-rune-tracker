@@ -1,6 +1,8 @@
+import math
+
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from . import positions, winutil
 from .config import CONFIG
@@ -10,6 +12,14 @@ from .tracker_state import TRACKER
 ROW_STYLE = """
 QLabel#warn { color: #ff5c5c; font-size: 16px; font-weight: bold; }
 """
+
+
+def _grid_shape(entry_count: int, available_height: int, row_height: int) -> tuple[int, int]:
+    if entry_count <= 0:
+        return 0, 0
+    max_rows = max(1, available_height // row_height)
+    rows = min(entry_count, max_rows)
+    return rows, math.ceil(entry_count / rows)
 
 
 def _frameless_overlay_flags():
@@ -74,14 +84,17 @@ class RuneListOverlay(QWidget):
         self.setStyleSheet(ROW_STYLE)
 
         self._locked = True
+        self._auto_position = positions.get_position("list_overlay") is None
+        self._default_top = 140
         self._drag = _DragHelper(self, "list_overlay", enabled_fn=lambda: not self._locked)
         self._hover_targets: list[tuple[QWidget, object]] = []  # (row_widget, RecordedRune)
 
-        self.title = QLabel("Tracked Runes")
+        self.title = QLabel("Passed Runes")
         self.title.setWordWrap(True)
         self.title.setAlignment(Qt.AlignRight)
+        self.title.setAttribute(Qt.WA_TransparentForMouseEvents)
 
-        self.rows_layout = QVBoxLayout()
+        self.rows_layout = QGridLayout()
         self.rows_layout.setSpacing(2)
         self.rows_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -103,12 +116,18 @@ class RuneListOverlay(QWidget):
     def _position(self):
         screen = QGuiApplication.primaryScreen().geometry()
         x = screen.right() - self.width() - 10
-        y = screen.top() + 60
+        y = self._default_top
         self.move(x, y)
+
+    def place_below(self, widget: QWidget):
+        if not self._auto_position:
+            return
+        self._default_top = widget.geometry().bottom() + 8
+        self._position()
 
     def _apply_title_style(self):
         if self._locked:
-            self.title.setText("Tracked Runes")
+            self.title.setText("Passed Runes")
             self.title.setStyleSheet(
                 "color: white; font-size: 14px; font-weight: bold;"
                 "background: rgba(20,20,20,180); padding: 4px 8px; border-radius: 4px;"
@@ -126,9 +145,12 @@ class RuneListOverlay(QWidget):
         self._locked = locked
         winutil.make_click_through(int(self.winId()), locked)
         self._apply_title_style()
+        self.refresh()
 
     def mousePressEvent(self, event):
-        if not self._drag.press(event):
+        if self._drag.press(event):
+            self._auto_position = False
+        else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -154,7 +176,19 @@ class RuneListOverlay(QWidget):
         if self._locked:
             self.title.setVisible(len(entries) > 0)
 
-        for entry in entries[-CONFIG.overlay_max_visible:]:
+        if not entries:
+            self.hide()
+            return
+        if not self.isVisible():
+            self.show()
+
+        visible_entries = entries
+        screen = QGuiApplication.screenAt(self.pos()) or QGuiApplication.primaryScreen()
+        available_height = max(1, screen.availableGeometry().bottom() - self.y() - 48)
+        row_height = CONFIG.overlay_icon_size + 8
+        max_rows, _columns = _grid_shape(len(visible_entries), available_height, row_height)
+
+        for index, entry in enumerate(visible_entries):
             # Compact by default (icon only) since a chain can stack 9+
             # entries - full name/effect text shows up in a hover popup
             # (see HoverInfoPopup / hit_test) instead of taking up
@@ -165,21 +199,22 @@ class RuneListOverlay(QWidget):
             # polling the global cursor position against these rows'
             # geometry (works regardless of click-through state).
             row = QWidget()
+            row.setFixedSize(154, row_height)
             row.setStyleSheet("background: rgba(20,20,20,150); border-radius: 4px;")
             h = QHBoxLayout(row)
             h.setContentsMargins(4, 2, 4, 2)
             h.setSpacing(4)
 
-            h.addStretch(1)
-
-            if not entry.is_passable:
-                warn_label = QLabel("!")
-                warn_label.setObjectName("warn")
-                h.addWidget(warn_label)
+            name_label = QLabel(entry.name.removesuffix(" Rune"))
+            name_label.setStyleSheet("color: white; font-size: 11px;")
+            name_label.setFixedWidth(72)
+            name_label.setToolTip(entry.name)
+            h.addWidget(name_label)
 
             discard_btn = QPushButton("x")
             discard_btn.setFixedSize(18, 18)
             discard_btn.setToolTip("Untrack this capture")
+            discard_btn.setVisible(not self._locked)
             discard_btn.setStyleSheet(
                 "QPushButton { color: #ff8080; background: rgba(60,20,20,180); border: none;"
                 " border-radius: 9px; font-weight: bold; font-size: 11px; padding: 0px; }"
@@ -195,11 +230,23 @@ class RuneListOverlay(QWidget):
                 icon_label.setPixmap(pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             h.addWidget(icon_label)
 
-            self.rows_layout.addWidget(row)
+            grid_row = index % max_rows
+            grid_column = index // max_rows
+            self.rows_layout.addWidget(row, grid_row, grid_column)
             self._hover_targets.append((row, entry))
 
+        self.title.setText(f"Passed Runes ({len(entries)})")
         self.adjustSize()
-        self.resize(110, self.height())
+        if self._auto_position:
+            self._position()
+        self._keep_on_screen()
+
+    def _keep_on_screen(self):
+        screen = QGuiApplication.screenAt(self.frameGeometry().center()) or QGuiApplication.primaryScreen()
+        bounds = screen.availableGeometry()
+        x = min(max(self.x(), bounds.left()), bounds.right() - self.width() + 1)
+        y = min(max(self.y(), bounds.top()), bounds.bottom() - self.height() + 1)
+        self.move(x, y)
 
     def hit_test(self, global_pos: QPoint):
         """Returns the RecordedRune whose row is under global_pos, or None."""
