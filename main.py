@@ -11,9 +11,8 @@ from src.capture import capture_around_cursor
 from src.config import CONFIG
 from src.hotkeys import HotkeyListener
 from src.icon_db import ICON_LIBRARY, MATCH_THRESHOLD
-from src.log_watcher import AreaEvent, LogWatcher
 from src.name_prompt import DisambiguationDialog, NamePromptDialog
-from src.overlay import CaptureToast, ControlPanel, HoverInfoPopup, MapChangePopup, RuneListOverlay
+from src.overlay import CaptureToast, ControlPanel, HoverInfoPopup, RuneListOverlay
 from src.recognition_samples import save_recognition_sample
 from src.resources import app_icon
 from src.rune_vision import crop_detected_icon, detect_passable_rune
@@ -132,7 +131,6 @@ def main():
 
     list_overlay = RuneListOverlay()
     control_panel = ControlPanel()
-    map_popup = MapChangePopup(timeout_sec=12)
     hover_popup = HoverInfoPopup()
     capture_toast = CaptureToast()
     tray = TrayIcon()
@@ -145,16 +143,12 @@ def main():
     visibility = WindowVisibilityController(app.topLevelWidgets)
 
     action_queue: "queue.Queue[str]" = queue.Queue()
-    area_queue: "queue.Queue[AreaEvent]" = queue.Queue()
     capture_in_progress = False
 
     hotkeys = HotkeyListener(action_queue)
-    log_watcher = LogWatcher(area_queue)
 
-    control_panel.set_status(log_watcher.status)
-
-    def do_reset(new_area_name: str | None = None):
-        TRACKER.reset(new_area_name)
+    def do_reset():
+        TRACKER.reset()
         list_overlay.refresh()
 
     def on_record():
@@ -245,28 +239,19 @@ def main():
         else:
             control_panel.set_status(f"Undid '{undone.name}'.")
 
-    def on_area_event(evt: AreaEvent):
-        if evt.is_hideout:
-            return
-        if evt.likely_map and not visibility.hidden:
-            map_popup.announce(evt.area_name)
-
     def open_settings():
         dialog = SettingsDialog()
         if dialog.exec() == SettingsDialog.Accepted:
             dialog.apply_to_config()
             hotkeys.rebuild()
-            log_watcher.restart()
-            control_panel.set_status(log_watcher.status)
             list_overlay.refresh()
 
-    control_panel.reset_clicked.connect(lambda: do_reset(None))
+    control_panel.reset_clicked.connect(do_reset)
     control_panel.lock_toggled.connect(list_overlay.set_locked)
     list_overlay.discard_requested.connect(on_discard)
-    map_popup.reset_clicked.connect(lambda: do_reset(map_popup.label.text()))
 
     tray.settings_requested.connect(open_settings)
-    tray.reset_requested.connect(lambda: do_reset(None))
+    tray.reset_requested.connect(do_reset)
     tray.undo_requested.connect(on_undo)
     tray.quit_requested.connect(app.quit)
 
@@ -306,7 +291,7 @@ def main():
                         if not visibility.hidden:
                             on_undo()
                     elif action == "reset":
-                        do_reset(None)
+                        do_reset()
                     elif action == "toggle_visibility":
                         hover_popup.hide_popup()
                         visibility.toggle()
@@ -315,13 +300,6 @@ def main():
                             toggle_widget(control_panel)
                 except Exception as exc:  # noqa: BLE001 - surface it, never fail silently
                     control_panel.set_status(f"Error handling '{action}': {exc}")
-        except queue.Empty:
-            pass
-
-        try:
-            while True:
-                evt = area_queue.get_nowait()
-                on_area_event(evt)
         except queue.Empty:
             pass
 
@@ -345,7 +323,6 @@ def main():
     hover_timer.start(120)
 
     hotkeys.start()
-    log_watcher.start()
 
     sys.exit(app.exec())
 

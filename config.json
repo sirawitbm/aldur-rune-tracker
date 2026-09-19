@@ -13,8 +13,5 @@
   "overlay_icon_size": 36,
   "toast_position": "cursor",
   "ocr_lang": "en",
-  "client_log_path": null,
-  "log_poll_interval_sec": 0.5,
-  "map_popup_timeout_sec": 12,
   "data_dir": "data"
 }
