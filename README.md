@@ -13,7 +13,7 @@ hovered slot is not passable. It does not recommend which rune to choose.
 **[Download the latest Windows release](https://github.com/sirawitbm/aldur-rune-tracker/releases/latest)**
 
 On the release page, download the file named like
-`PoE2RuneTracker-v0.1.1-windows-x64.zip`. Do not download GitHub's automatically
+`PoE2RuneTracker-v0.1.2-windows-x64.zip`. Do not download GitHub's automatically
 generated "Source code" ZIP unless you want to run the Python source.
 
 1. Download the portable ZIP and its matching `.sha256` file.
@@ -29,8 +29,8 @@ uninstall, quit the tray app and delete its folder.
 Open PowerShell in your Downloads folder and run:
 
 ```powershell
-$actual = (Get-FileHash .\PoE2RuneTracker-v0.1.1-windows-x64.zip -Algorithm SHA256).Hash
-$expected = ((Get-Content .\PoE2RuneTracker-v0.1.1-windows-x64.zip.sha256) -split '\s+')[0]
+$actual = (Get-FileHash .\PoE2RuneTracker-v0.1.2-windows-x64.zip -Algorithm SHA256).Hash
+$expected = ((Get-Content .\PoE2RuneTracker-v0.1.2-windows-x64.zip.sha256) -split '\s+')[0]
 $actual -eq $expected
 ```
 
