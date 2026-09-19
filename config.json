@@ -1,7 +1,9 @@
 {
   "record_hotkey": "<ctrl>+3",
   "undo_hotkey": "<ctrl>+4",
+  "reset_hotkey": "<ctrl>+<shift>+4",
   "hide_hotkey": "<ctrl>+5",
+  "panel_hotkey": "<ctrl>+<shift>+5",
   "capture_delay_ms": 150,
   "capture_width": 900,
   "capture_height": 700,

@@ -19,7 +19,9 @@ class SettingsDialog(QDialog):
 
         self.hotkey_btn = HotkeyCaptureButton(CONFIG.record_hotkey)
         self.undo_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "undo_hotkey", "<f8>"))
+        self.reset_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "reset_hotkey", "<ctrl>+<shift>+4"))
         self.hide_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "hide_hotkey", "<ctrl>+5"))
+        self.panel_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "panel_hotkey", "<ctrl>+<shift>+5"))
         self.capture_delay = self._spin(0, 1000, getattr(CONFIG, "capture_delay_ms", 150))
 
         self.log_path_edit = QLineEdit(CONFIG.client_log_path or "")
@@ -50,7 +52,9 @@ class SettingsDialog(QDialog):
         form = QFormLayout()
         form.addRow("Capture hotkey:", self.hotkey_btn)
         form.addRow("Undo-last hotkey:", self.undo_hotkey_btn)
-        form.addRow("Show/hide hotkey:", self.hide_hotkey_btn)
+        form.addRow("Reset tracker hotkey:", self.reset_hotkey_btn)
+        form.addRow("Show/hide everything:", self.hide_hotkey_btn)
+        form.addRow("Show/hide control panel:", self.panel_hotkey_btn)
         form.addRow("Capture delay (ms):", self.capture_delay)
         form.addRow("Client.txt path:", log_row)
         form.addRow("Capture width:", self.capture_w)
@@ -89,11 +93,17 @@ class SettingsDialog(QDialog):
             self.log_path_edit.setText(path)
 
     def _on_save(self):
-        hotkeys = [self.hotkey_btn.value, self.undo_hotkey_btn.value, self.hide_hotkey_btn.value]
+        hotkeys = [
+            self.hotkey_btn.value,
+            self.undo_hotkey_btn.value,
+            self.reset_hotkey_btn.value,
+            self.hide_hotkey_btn.value,
+            self.panel_hotkey_btn.value,
+        ]
         if len(set(hotkeys)) != len(hotkeys):
             QMessageBox.warning(
                 self, "Hotkey conflict",
-                "Capture, undo, and show/hide hotkeys must be different.",
+                "Capture, undo, reset, and visibility hotkeys must all be different.",
             )
             return
         self.accept()
@@ -102,7 +112,9 @@ class SettingsDialog(QDialog):
         """Writes the dialog's values into CONFIG and persists them. Call after exec() == Accepted."""
         CONFIG.set("record_hotkey", self.hotkey_btn.value)
         CONFIG.set("undo_hotkey", self.undo_hotkey_btn.value)
+        CONFIG.set("reset_hotkey", self.reset_hotkey_btn.value)
         CONFIG.set("hide_hotkey", self.hide_hotkey_btn.value)
+        CONFIG.set("panel_hotkey", self.panel_hotkey_btn.value)
         CONFIG.set("capture_delay_ms", self.capture_delay.value())
         CONFIG.set("client_log_path", self.log_path_edit.text().strip() or None)
         CONFIG.set("capture_width", self.capture_w.value())
