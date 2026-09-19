@@ -131,12 +131,8 @@ passable slot.**
 
 ## Reset behavior
 
-Same as before: a background thread tails `Client.txt` for zone changes.
-Entering a hideout is ignored; entering what looks like a freshly
-generated map pops up a "reset the tracker?" confirmation (auto-dismisses
-as "keep tracking" after 12s if ignored). A manual **Reset tracker**
-button always sits in the control panel regardless of whether that
-detection fires correctly.
+The tracker resets only when requested through the control panel, tray menu,
+or reset hotkey. It does not read game log files or infer map transitions.
 
 ## Moving the overlay
 
@@ -153,11 +149,10 @@ Right-click (or double-click) the tray icon in the Windows notification
 area → **Settings**. You can rebind the capture hotkey and the undo-last
 hotkey (click the button, then just press the key combo you want - it's
 recorded directly, no need to type pynput's `<f9>`-style syntax; Save
-refuses if you set them to the same key), change the `Client.txt` path,
-and tune the capture region. Hit **Save** and it applies immediately - the
-hotkey listener and log watcher both restart themselves in the background,
-no need to relaunch the app. The tray menu also has **Undo last capture**,
-**Reset tracker**, and **Quit**.
+refuses if you set them to the same key), and tune the capture region. Hit
+**Save** and it applies immediately - the hotkey listener rebuilds itself in
+the background, with no need to relaunch the app. The tray menu also has
+**Undo last capture**, **Reset tracker**, and **Quit**.
 
 ## Running it
 
@@ -186,8 +181,7 @@ does not yet have a commercial code-signing certificate. Do not disable your
 security software; download only from this repository's Releases page, verify
 the SHA-256 file, and scan the archive. The app does not require elevation and
 its runtime has no network calls. It reads screen pixels, registered global
-hotkeys, and the configured local PoE `Client.txt`; optional calibration
-screenshots remain local.
+hotkeys, and its own local data; optional calibration screenshots remain local.
 
 ### Run from source
 
@@ -195,10 +189,6 @@ screenshots remain local.
 pip install -r requirements.txt
 python main.py
 ```
-
-`Client.txt` is auto-detected from common Steam/GGG
-paths on first run; if it's not found, set it from the Settings dialog
-(tray icon) instead of hand-editing `config.json`.
 
 ## Building a release
 
@@ -441,14 +431,10 @@ doesn't already have.
    signature history (see "The icon library" above), so accuracy against
    real screenshots should improve the more the app is actually used, even
    without touching `MATCH_THRESHOLD`.
-5. **"Likely map" reset detection** (`Generating level ...` log-line
-   heuristic) is carried over from PoE1 tooling and unverified against a
-   real PoE2 `Client.txt`. The manual reset button always works regardless.
-
 ## Project layout
 
 ```
-main.py                     entry point - wires hotkey/log watcher/overlay/tray together
+main.py                     entry point - wires hotkeys, overlay, and tray together
 build.ps1                    PyInstaller build script -> dist/PoE2RuneTracker/
 release.ps1                  clean portable ZIP + SHA-256 release builder
 config.json                  all tunables (editable directly, or via Settings)
@@ -471,13 +457,12 @@ src/rune_vision.py            yellow-marker detection + marker-aligned icon crop
 src/tooltip_parse.py          OCR -> name guess (a DB lookup key, never shown)
 src/icon_db.py                 the self-growing icon library: appearance matching + display assets
 src/name_prompt.py            NamePromptDialog (last resort, full list) + DisambiguationDialog (close call, one-click)
-src/log_watcher.py            Client.txt tail + area-type classification, live-restartable
 src/hotkeys.py                global hotkey listener, live-rebuildable
 src/hotkey_capture.py         "press a key" widget -> pynput hotkey string
-src/settings_dialog.py        live settings dialog (hotkey, log path, capture region, icon size)
+src/settings_dialog.py        live settings dialog (hotkeys, capture region, icon size)
 src/tray.py                   system tray icon + right-click menu
 src/tracker_state.py          in-memory run state + persistence
-src/overlay.py                the five PySide6 windows (list, control panel, hover popup, capture toast, map popup)
+src/overlay.py                the four PySide6 windows (list, control panel, hover popup, capture toast)
 src/winutil.py                click-through / no-activate win32 window styles
 src/positions.py              drag-to-move position persistence
 ```

@@ -27,11 +27,14 @@ DEFAULT_CONFIG = {
     "toast_position": "cursor",
     "collect_recognition_samples": False,
     "ocr_lang": "en",
-    "client_log_path": None,
-    "log_poll_interval_sec": 0.5,
-    "map_popup_timeout_sec": 12,
     "data_dir": "data",
 }
+
+_REMOVED_CONFIG_KEYS = (
+    "client_log_path",
+    "log_poll_interval_sec",
+    "map_popup_timeout_sec",
+)
 
 
 class Config:
@@ -40,6 +43,13 @@ class Config:
         if not path.exists():
             path.write_text(json.dumps(DEFAULT_CONFIG, indent=2), encoding="utf-8")
         self._data = json.loads(path.read_text(encoding="utf-8"))
+        removed_old_setting = False
+        for key in _REMOVED_CONFIG_KEYS:
+            if key in self._data:
+                del self._data[key]
+                removed_old_setting = True
+        if removed_old_setting:
+            self.save()
 
     def __getattr__(self, item):
         try:

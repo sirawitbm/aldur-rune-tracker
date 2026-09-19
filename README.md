@@ -55,8 +55,8 @@ The result must be `True`.
 | `Ctrl+Shift+5` | Hide or restore only the control panel |
 
 Right-click or double-click the notification-area icon to open **Settings**.
-Hotkeys, overlay size, capture timing, and the PoE `Client.txt` path can be
-changed there without restarting the app.
+Hotkeys, overlay size, and capture timing can be changed there without
+restarting the app.
 
 The rune list is click-through while locked. Use **Unlock rune list to move
 it** in the control panel before dragging it or removing an older entry, then
@@ -100,11 +100,6 @@ text signals disagree.
 
 Unlock and drag it from the control panel. If it cannot be recovered, quit the
 app, delete `data/positions.json` beside the executable, and restart.
-
-### `Client.txt` was not detected
-
-Open **Settings** and select your Path of Exile 2 `Client.txt` manually. Rune
-capture still works; the log is used for automatic new-map reset prompts.
 
 ## Privacy and safety
 

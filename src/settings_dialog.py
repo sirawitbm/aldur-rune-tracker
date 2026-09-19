@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit,
-    QMessageBox, QPushButton, QSpinBox, QVBoxLayout,
+    QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QMessageBox,
+    QPushButton, QSpinBox, QVBoxLayout,
 )
 
 from .config import CONFIG
@@ -23,14 +23,6 @@ class SettingsDialog(QDialog):
         self.hide_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "hide_hotkey", "<ctrl>+5"))
         self.panel_hotkey_btn = HotkeyCaptureButton(getattr(CONFIG, "panel_hotkey", "<ctrl>+<shift>+5"))
         self.capture_delay = self._spin(0, 1000, getattr(CONFIG, "capture_delay_ms", 150))
-
-        self.log_path_edit = QLineEdit(CONFIG.client_log_path or "")
-        self.log_path_edit.setPlaceholderText("auto-detect")
-        browse_btn = QPushButton("Browse...")
-        browse_btn.clicked.connect(self._browse_log_path)
-        log_row = QHBoxLayout()
-        log_row.addWidget(self.log_path_edit)
-        log_row.addWidget(browse_btn)
 
         self.capture_w = self._spin(200, 2000, CONFIG.capture_width)
         self.capture_h = self._spin(150, 1500, CONFIG.capture_height)
@@ -56,7 +48,6 @@ class SettingsDialog(QDialog):
         form.addRow("Show/hide everything:", self.hide_hotkey_btn)
         form.addRow("Show/hide control panel:", self.panel_hotkey_btn)
         form.addRow("Capture delay (ms):", self.capture_delay)
-        form.addRow("Client.txt path:", log_row)
         form.addRow("Capture width:", self.capture_w)
         form.addRow("Capture height:", self.capture_h)
         form.addRow("Capture offset X:", self.offset_x)
@@ -78,7 +69,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addLayout(form)
         layout.addLayout(btn_row)
-        self.resize(360, 350)
+        self.resize(360, 320)
 
     @staticmethod
     def _spin(lo, hi, value):
@@ -86,11 +77,6 @@ class SettingsDialog(QDialog):
         s.setRange(lo, hi)
         s.setValue(value)
         return s
-
-    def _browse_log_path(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select Client.txt", filter="Log files (*.txt);;All files (*)")
-        if path:
-            self.log_path_edit.setText(path)
 
     def _on_save(self):
         hotkeys = [
@@ -116,7 +102,6 @@ class SettingsDialog(QDialog):
         CONFIG.set("hide_hotkey", self.hide_hotkey_btn.value)
         CONFIG.set("panel_hotkey", self.panel_hotkey_btn.value)
         CONFIG.set("capture_delay_ms", self.capture_delay.value())
-        CONFIG.set("client_log_path", self.log_path_edit.text().strip() or None)
         CONFIG.set("capture_width", self.capture_w.value())
         CONFIG.set("capture_height", self.capture_h.value())
         CONFIG.set("capture_offset_x", self.offset_x.value())
