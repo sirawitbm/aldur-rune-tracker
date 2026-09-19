@@ -1,7 +1,6 @@
+import colorsys
 from dataclasses import dataclass
 
-import cv2
-import numpy as np
 from PIL import Image
 
 
@@ -18,49 +17,60 @@ def detect_passable_rune(
     icon_size: int,
 ) -> PassableRuneDetection | None:
     """Find the yellow passable marker above the rune under the cursor."""
-    rgb = np.asarray(image.convert("RGB"))
-    hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
-    yellow = cv2.inRange(
-        hsv,
-        np.array((17, 145, 180), dtype=np.uint8),
-        np.array((38, 255, 255), dtype=np.uint8),
-    )
-    yellow = cv2.morphologyEx(
-        yellow,
-        cv2.MORPH_CLOSE,
-        cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)),
-    )
-
-    count, _labels, stats, centroids = cv2.connectedComponentsWithStats(yellow)
     cursor_x, cursor_y = cursor
+    image_width, image_height = image.size
+    search_left = max(0, round(cursor_x - icon_size * 0.75))
+    search_top = max(0, round(cursor_y - icon_size * 0.85))
+    search_right = min(image_width, round(cursor_x + icon_size * 0.75) + 1)
+    search_bottom = min(image_height, round(cursor_y - icon_size * 0.2) + 1)
+    if search_left >= search_right or search_top >= search_bottom:
+        return None
+
+    search = image.convert("RGB").crop((search_left, search_top, search_right, search_bottom))
+    width, height = search.size
+    pixels = search.load()
+    yellow = [False] * (width * height)
+    for y in range(height):
+        for x in range(width):
+            red, green, blue = pixels[x, y]
+            hue, saturation, value = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
+            yellow[y * width + x] = (
+                17 / 180 <= hue <= 38 / 180
+                and saturation >= 145 / 255
+                and value >= 180 / 255
+            )
+
+    components = _connected_components(_morphological_close(yellow, width, height), width, height)
     expected_marker_y = cursor_y - icon_size * 0.5
     best: tuple[float, tuple[int, int, int, int], float] | None = None
 
     min_area = max(6, round(icon_size * icon_size * 0.002))
     max_area = round(icon_size * icon_size * 0.12)
-    for index in range(1, count):
-        x, y, width, height, area = (int(value) for value in stats[index])
-        center_x, center_y = centroids[index]
+    for x, y, component_width, component_height, area, center_x, center_y in components:
+        x += search_left
+        y += search_top
+        center_x += search_left
+        center_y += search_top
         if not min_area <= area <= max_area:
             continue
-        if width > icon_size * 0.75 or height > icon_size * 0.3:
+        if component_width > icon_size * 0.75 or component_height > icon_size * 0.3:
             continue
-        if width < 2 or height < 1:
+        if component_width < 2 or component_height < 1:
             continue
         if abs(center_x - cursor_x) > icon_size * 0.48:
             continue
         if not cursor_y - icon_size * 0.8 <= center_y <= cursor_y - icon_size * 0.25:
             continue
-        fill_ratio = area / (width * height)
+        fill_ratio = area / (component_width * component_height)
         if fill_ratio < 0.15:
             continue
 
         x_error = abs(center_x - cursor_x) / icon_size
         y_error = abs(center_y - expected_marker_y) / icon_size
-        thinness_bonus = min(width / max(height, 1), 4.0) / 4.0
+        thinness_bonus = min(component_width / max(component_height, 1), 4.0) / 4.0
         score = x_error * 1.4 + y_error - min(fill_ratio, 1.0) * 0.1 - thinness_bonus * 0.08
         confidence = max(0.0, min(1.0, 1.0 - score / 1.5))
-        marker_box = (x, y, x + width, y + height)
+        marker_box = (x, y, x + component_width, y + component_height)
         if best is None or score < best[0]:
             best = (score, marker_box, confidence)
 
@@ -80,10 +90,76 @@ def detect_passable_rune(
         icon_center_x - half + icon_size,
         icon_center_y - half + icon_size,
     )
-    image_width, image_height = image.size
     if icon_box[0] < 0 or icon_box[1] < 0 or icon_box[2] > image_width or icon_box[3] > image_height:
         return None
     return PassableRuneDetection(marker_box, icon_box, confidence)
+
+
+def _morphological_close(mask: list[bool], width: int, height: int) -> list[bool]:
+    offsets = ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1))
+    dilated = [False] * len(mask)
+    for y in range(height):
+        for x in range(width):
+            dilated[y * width + x] = any(
+                0 <= x + dx < width
+                and 0 <= y + dy < height
+                and mask[(y + dy) * width + x + dx]
+                for dx, dy in offsets
+            )
+
+    closed = [False] * len(mask)
+    for y in range(height):
+        for x in range(width):
+            closed[y * width + x] = all(
+                not (0 <= x + dx < width and 0 <= y + dy < height)
+                or dilated[(y + dy) * width + x + dx]
+                for dx, dy in offsets
+            )
+    return closed
+
+
+def _connected_components(
+    mask: list[bool],
+    width: int,
+    height: int,
+) -> list[tuple[int, int, int, int, int, float, float]]:
+    visited = [False] * len(mask)
+    components = []
+    for start in range(len(mask)):
+        if not mask[start] or visited[start]:
+            continue
+
+        stack = [start]
+        visited[start] = True
+        points = []
+        while stack:
+            index = stack.pop()
+            x, y = index % width, index // width
+            points.append((x, y))
+            for neighbor_y in range(max(0, y - 1), min(height, y + 2)):
+                for neighbor_x in range(max(0, x - 1), min(width, x + 2)):
+                    neighbor = neighbor_y * width + neighbor_x
+                    if mask[neighbor] and not visited[neighbor]:
+                        visited[neighbor] = True
+                        stack.append(neighbor)
+
+        min_x = min(x for x, _ in points)
+        max_x = max(x for x, _ in points)
+        min_y = min(y for _, y in points)
+        max_y = max(y for _, y in points)
+        area = len(points)
+        components.append(
+            (
+                min_x,
+                min_y,
+                max_x - min_x + 1,
+                max_y - min_y + 1,
+                area,
+                sum(x for x, _ in points) / area,
+                sum(y for _, y in points) / area,
+            )
+        )
+    return components
 
 
 def crop_detected_icon(image: Image.Image, detection: PassableRuneDetection) -> Image.Image:

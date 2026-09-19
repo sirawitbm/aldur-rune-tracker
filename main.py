@@ -22,7 +22,7 @@ from src.tooltip_parse import parse_tooltip
 from src.tracker_state import TRACKER
 from src.tray import TrayIcon
 from src.version import __version__
-from src.visibility import WindowVisibilityController
+from src.visibility import WindowVisibilityController, toggle_widget
 
 
 def identify(result, parsed):
@@ -305,9 +305,14 @@ def main():
                     elif action == "undo":
                         if not visibility.hidden:
                             on_undo()
+                    elif action == "reset":
+                        do_reset(None)
                     elif action == "toggle_visibility":
                         hover_popup.hide_popup()
                         visibility.toggle()
+                    elif action == "toggle_control_panel":
+                        if not visibility.hidden:
+                            toggle_widget(control_panel)
                 except Exception as exc:  # noqa: BLE001 - surface it, never fail silently
                     control_panel.set_status(f"Error handling '{action}': {exc}")
         except queue.Empty:

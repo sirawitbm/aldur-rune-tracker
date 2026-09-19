@@ -8,10 +8,8 @@ from .config import CONFIG
 class HotkeyListener:
     """Global hotkeys that work even while PoE2 has focus.
 
-    Puts an action name ("record" / "undo" / "toggle_visibility") onto the queue for each
-    configured hotkey pressed. Supports being rebuilt live (stop old
-    listener, start a new one reading current CONFIG values) so Settings
-    changes apply without restarting the app.
+    Puts an action name onto the queue for each configured hotkey pressed.
+    Supports being rebuilt live so Settings changes apply without restarting.
     """
 
     def __init__(self, action_queue: "queue.Queue[str]"):
@@ -35,9 +33,15 @@ class HotkeyListener:
         undo_hotkey = getattr(CONFIG, "undo_hotkey", None)
         if undo_hotkey and undo_hotkey != CONFIG.record_hotkey:
             bindings[undo_hotkey] = lambda: self.action_queue.put("undo")
+        reset_hotkey = getattr(CONFIG, "reset_hotkey", "<ctrl>+<shift>+4")
+        if reset_hotkey and reset_hotkey not in bindings:
+            bindings[reset_hotkey] = lambda: self.action_queue.put("reset")
         hide_hotkey = getattr(CONFIG, "hide_hotkey", "<ctrl>+5")
         if hide_hotkey and hide_hotkey not in bindings:
             bindings[hide_hotkey] = lambda: self.action_queue.put("toggle_visibility")
+        panel_hotkey = getattr(CONFIG, "panel_hotkey", "<ctrl>+<shift>+5")
+        if panel_hotkey and panel_hotkey not in bindings:
+            bindings[panel_hotkey] = lambda: self.action_queue.put("toggle_control_panel")
 
         self._listener = keyboard.GlobalHotKeys(bindings)
         self._listener.start()

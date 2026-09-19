@@ -1,4 +1,4 @@
-# Builds dist\PoE2RuneTracker\PoE2RuneTracker.exe - a standalone folder you
+﻿# Builds dist\PoE2RuneTracker\PoE2RuneTracker.exe - a standalone folder you
 # can copy anywhere and double-click to run (no Python install needed).
 # Re-run this after any code change; config.json/data/ (session, capture
 # history, the learned icon library) are created next to the exe on first
@@ -36,6 +36,8 @@ try {
         --version-file "version_info.txt" `
         --collect-all winrt `
         --collect-all winocr `
+        --exclude-module cv2 `
+        --exclude-module numpy `
         --add-data "data/RA.jpg;data" `
         --add-data "data/rune_icon_seed.json;data" `
         --add-data "data/seed_icons;data/seed_icons" `

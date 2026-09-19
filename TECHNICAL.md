@@ -11,7 +11,7 @@ contributor workflow for PoE2 Grand Expedition Rune Tracker.
   <img src="data/RA.jpg" width="180" alt="PoE2 Rune Tracker logo">
 </p>
 
-**Current release: v0.1.0 (Windows portable)**
+**Current release: v0.1.1 (Windows portable)**
 
 Tracks the Aldur Runes you pick up while walking the Remnants in PoE2's
 Grand Expedition content. During the setup phase you walk to each Remnant
@@ -124,6 +124,11 @@ passable slot.**
   Press it again to restore exactly the windows that were visible. Capture
   and undo hotkeys are ignored while hidden.
 
+  Press **Ctrl+Shift+5** to hide or restore only the reset/lock control
+  panel while leaving the rune list visible. Press **Ctrl+Shift+4** to reset
+  the tracker without opening the panel. All five shortcuts are configurable
+  in Settings.
+
 ## Reset behavior
 
 Same as before: a background thread tails `Client.txt` for zone changes.
@@ -162,8 +167,8 @@ Download the Windows ZIP and matching `.sha256` file from the repository's
 **Releases** page. Verify it before opening:
 
 ```powershell
-Get-FileHash .\PoE2RuneTracker-v0.1.0-windows-x64.zip -Algorithm SHA256
-Get-Content .\PoE2RuneTracker-v0.1.0-windows-x64.zip.sha256
+Get-FileHash .\PoE2RuneTracker-v0.1.1-windows-x64.zip -Algorithm SHA256
+Get-Content .\PoE2RuneTracker-v0.1.1-windows-x64.zip.sha256
 ```
 
 The two hashes must match. Scan the ZIP with Microsoft Defender, extract the
@@ -211,7 +216,7 @@ whole folder for local testing. Local rebuilds preserve `config.json` and
 Create the clean shareable ZIP and SHA-256 file:
 
 ```powershell
-.\release.ps1 -Version 0.1.0
+.\release.ps1 -Version 0.1.1
 ```
 
 Artifacts are written to `dist\release\`. The release script builds in a
@@ -221,7 +226,7 @@ aliases, and calibration samples from being shared. Do not manually zip the
 local `dist\PoE2RuneTracker` folder because that folder intentionally retains
 your runtime data.
 
-Pushing a semantic version tag such as `v0.1.0` runs
+Pushing a semantic version tag such as `v0.1.1` runs
 `.github/workflows/release.yml`, builds on GitHub's Windows runner, uploads the
 portable archive and checksum, and creates the GitHub Release automatically.
 
@@ -245,8 +250,8 @@ README, merge that release PR, then tag the merge commit:
 ```powershell
 git switch main
 git pull --ff-only
-git tag -a v0.1.0 -m "PoE2 Rune Tracker v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "PoE2 Rune Tracker v0.1.1"
+git push origin v0.1.1
 ```
 
 In GitHub repository settings, protect `main`: require a pull request before
@@ -255,14 +260,16 @@ force pushes. Branch protection is a repository setting and is not changed by
 this codebase.
 
 An installer can be added later after obtaining a trusted Windows code-signing
-certificate. For v0.1.0, the transparent portable archive is the lower-risk
+certificate. For v0.1.1, the transparent portable archive is the lower-risk
 way to share the app.
 
 ## Tuning (config.json, or Settings from the tray icon)
 
-- `record_hotkey` / `undo_hotkey` / `hide_hotkey` - pynput hotkey strings,
-  defaulting to `"<ctrl>+3"`, `"<ctrl>+4"`, and `"<ctrl>+5"`. Easiest to set via the Settings dialog
-  instead of editing these by hand.
+- `record_hotkey` / `undo_hotkey` / `reset_hotkey` / `hide_hotkey` /
+  `panel_hotkey` - pynput hotkey strings, defaulting to `"<ctrl>+3"`,
+  `"<ctrl>+4"`, `"<ctrl>+<shift>+4"`, `"<ctrl>+5"`, and
+  `"<ctrl>+<shift>+5"`. Easiest to set via the Settings dialog instead of
+  editing these by hand.
 - `capture_delay_ms` (default 150) - waits this long after the hotkey
   before actually grabbing the screen. Games commonly have a short hover
   delay before a tooltip updates to the newly-hovered target; capturing

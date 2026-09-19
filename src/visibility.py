@@ -26,3 +26,13 @@ class WindowVisibilityController:
             except RuntimeError:
                 pass
         self.hidden = True
+
+
+def toggle_widget(widget):
+    if widget.isVisible():
+        widget.hide()
+        return False
+
+    widget.show()
+    widget.raise_()
+    return True
