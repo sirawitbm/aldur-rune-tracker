@@ -34,6 +34,8 @@ try {
     Remove-Item (Join-Path $stageApp "config.json") -Force -ErrorAction SilentlyContinue
     Remove-Item (Join-Path $stageApp "data") -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item (Join-Path $PSScriptRoot "README.md") $stageApp
+    Copy-Item (Join-Path $PSScriptRoot "TECHNICAL.md") $stageApp
+    Copy-Item (Join-Path $PSScriptRoot "LICENSE") $stageApp
 
     Remove-Item $zipPath, $checksumPath -Force -ErrorAction SilentlyContinue
     Compress-Archive -Path $stageApp -DestinationPath $zipPath -CompressionLevel Optimal
@@ -44,7 +46,13 @@ try {
         $relativePaths = @($archive.Entries | ForEach-Object {
             $_.FullName -replace '^[^/\\]+[/\\]', ''
         })
-        $missingRequired = @('PoE2RuneTracker.exe', 'README.md', '_internal\data\RA.jpg') |
+        $missingRequired = @(
+            'PoE2RuneTracker.exe',
+            'README.md',
+            'TECHNICAL.md',
+            'LICENSE',
+            '_internal\data\RA.jpg'
+        ) |
             Where-Object {
                 $expected = $_
                 -not ($relativePaths | Where-Object { ($_ -replace '/', '\') -eq $expected })
