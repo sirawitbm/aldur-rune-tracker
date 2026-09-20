@@ -58,6 +58,11 @@ Right-click or double-click the notification-area icon to open **Settings**.
 Hotkeys, overlay size, and capture timing can be changed there without
 restarting the app.
 
+The tracker checks the official GitHub Releases page shortly after startup.
+When a newer version is available, choose **Open download page** or **Skip this
+version**. Automatic checks can be disabled in Settings, and **Check for
+updates...** is always available from the tray menu.
+
 The rune list is click-through while locked. Use **Unlock rune list to move
 it** in the control panel before dragging it or removing an older entry, then
 lock it again for gameplay. Use **Reset tracker** when beginning a new chain.
@@ -103,7 +108,8 @@ app, delete `data/positions.json` beside the executable, and restart.
 
 ## Privacy and safety
 
-- The runtime makes no network requests.
+- The optional update check requests only the latest-release metadata from
+  GitHub. It does not upload settings, screenshots, history, or gameplay data.
 - Screenshots, settings, history, and learned recognition data stay in the
   portable app folder.
 - Accuracy-calibration screenshots are disabled by default because nearby UI

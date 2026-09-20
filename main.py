@@ -1,9 +1,10 @@
 import queue
 import sys
+import threading
 
-from PySide6.QtCore import QDir, QLockFile, QTimer
-from PySide6.QtGui import QCursor
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QDir, QLockFile, QTimer, Qt, QUrl
+from PySide6.QtGui import QCursor, QDesktopServices
+from PySide6.QtWidgets import QApplication, QMessageBox
 from PIL import ImageDraw
 
 from src import winutil
@@ -20,6 +21,7 @@ from src.settings_dialog import SettingsDialog
 from src.tooltip_parse import parse_tooltip
 from src.tracker_state import TRACKER
 from src.tray import TrayIcon
+from src.update_checker import ReleaseInfo, fetch_newer_release
 from src.version import __version__
 from src.visibility import WindowVisibilityController, toggle_widget
 
@@ -143,7 +145,10 @@ def main():
     visibility = WindowVisibilityController(app.topLevelWidgets)
 
     action_queue: "queue.Queue[str]" = queue.Queue()
+    update_queue: "queue.Queue[tuple[bool, ReleaseInfo | None, str | None]]" = queue.Queue()
     capture_in_progress = False
+    update_check_in_progress = False
+    app_closing = False
 
     hotkeys = HotkeyListener(action_queue)
 
@@ -246,14 +251,69 @@ def main():
             hotkeys.rebuild()
             list_overlay.refresh()
 
+    def show_update_message(
+        title: str,
+        text: str,
+        icon: QMessageBox.Icon = QMessageBox.Information,
+    ):
+        message = QMessageBox()
+        message.setWindowTitle(title)
+        message.setText(text)
+        message.setIcon(icon)
+        message.setWindowIcon(app_icon())
+        message.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        message.exec()
+
+    def show_available_update(release: ReleaseInfo):
+        message = QMessageBox()
+        message.setWindowTitle("Update available")
+        message.setText(f"PoE2 Rune Tracker {release.version} is available.")
+        message.setInformativeText(
+            f"You are using {__version__}. Open the official GitHub release to download it?"
+        )
+        message.setIcon(QMessageBox.Information)
+        message.setWindowIcon(app_icon())
+        message.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        download_button = message.addButton("Open download page", QMessageBox.AcceptRole)
+        skip_button = message.addButton("Skip this version", QMessageBox.RejectRole)
+        message.exec()
+        if message.clickedButton() is download_button:
+            QDesktopServices.openUrl(QUrl(release.page_url))
+        elif message.clickedButton() is skip_button:
+            CONFIG.set("skipped_update_version", release.version)
+            CONFIG.save()
+
+    def start_update_check(manual: bool = False):
+        nonlocal update_check_in_progress
+        if update_check_in_progress or app_closing:
+            return
+        update_check_in_progress = True
+
+        def worker():
+            try:
+                result = (manual, fetch_newer_release(__version__), None)
+            except Exception as exc:  # noqa: BLE001 - network errors are reported only for manual checks
+                result = (manual, None, str(exc))
+            if not app_closing:
+                update_queue.put(result)
+
+        threading.Thread(target=worker, daemon=True, name="update-check").start()
+
     control_panel.reset_clicked.connect(do_reset)
     control_panel.lock_toggled.connect(list_overlay.set_locked)
     list_overlay.discard_requested.connect(on_discard)
 
     tray.settings_requested.connect(open_settings)
+    tray.check_updates_requested.connect(lambda: start_update_check(manual=True))
     tray.reset_requested.connect(do_reset)
     tray.undo_requested.connect(on_undo)
     tray.quit_requested.connect(app.quit)
+
+    def mark_closing():
+        nonlocal app_closing
+        app_closing = True
+
+    app.aboutToQuit.connect(mark_closing)
 
     def run_record_delayed():
         nonlocal capture_in_progress
@@ -271,6 +331,7 @@ def main():
             capture_in_progress = False
 
     def poll_queues():
+        nonlocal update_check_in_progress
         try:
             while True:
                 action = action_queue.get_nowait()
@@ -303,6 +364,28 @@ def main():
         except queue.Empty:
             pass
 
+        try:
+            while True:
+                manual, release, error = update_queue.get_nowait()
+                update_check_in_progress = False
+                if error is not None:
+                    if manual:
+                        show_update_message(
+                            "Update check failed",
+                            "Could not check GitHub for updates. Please try again later.",
+                            QMessageBox.Warning,
+                        )
+                elif release is None:
+                    if manual:
+                        show_update_message(
+                            "No updates available",
+                            f"You are using the latest version ({__version__}).",
+                        )
+                elif manual or release.version != getattr(CONFIG, "skipped_update_version", None):
+                    show_available_update(release)
+        except queue.Empty:
+            pass
+
     def poll_hover():
         if visibility.hidden:
             hover_popup.hide_popup()
@@ -323,6 +406,8 @@ def main():
     hover_timer.start(120)
 
     hotkeys.start()
+    if getattr(CONFIG, "check_updates_on_startup", True):
+        QTimer.singleShot(3000, start_update_check)
 
     sys.exit(app.exec())
 

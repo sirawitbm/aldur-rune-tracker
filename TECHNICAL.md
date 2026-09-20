@@ -152,7 +152,21 @@ recorded directly, no need to type pynput's `<f9>`-style syntax; Save
 refuses if you set them to the same key), and tune the capture region. Hit
 **Save** and it applies immediately - the hotkey listener rebuilds itself in
 the background, with no need to relaunch the app. The tray menu also has
-**Undo last capture**, **Reset tracker**, and **Quit**.
+**Check for updates**, **Undo last capture**, **Reset tracker**, and **Quit**.
+
+## Update checks
+
+When enabled in Settings, the app requests the latest stable release metadata
+from GitHub three seconds after startup. The request runs on a background
+thread and times out after eight seconds, so capture and overlay interaction
+remain responsive. Drafts, prereleases, malformed tags, and versions that are
+not newer than the running app are ignored.
+
+An available update opens a topmost prompt with **Open download page** and
+**Skip this version**. The first choice opens the repository's fixed release
+URL in the default browser; the second stores only the skipped version in
+`config.json`. A manual **Check for updates** from the tray ignores that skip.
+The portable app does not replace its own files while running.
 
 ## Running it
 
@@ -180,8 +194,9 @@ Windows SmartScreen may warn about a new, unsigned application. The project
 does not yet have a commercial code-signing certificate. Do not disable your
 security software; download only from this repository's Releases page, verify
 the SHA-256 file, and scan the archive. The app does not require elevation and
-its runtime has no network calls. It reads screen pixels, registered global
-hotkeys, and its own local data; optional calibration screenshots remain local.
+only contacts GitHub for update metadata when update checks are enabled or
+requested manually. It reads screen pixels, registered global hotkeys, and its
+own local data; optional calibration screenshots remain local.
 
 ### Run from source
 
