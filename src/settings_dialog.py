@@ -40,6 +40,8 @@ class SettingsDialog(QDialog):
         self.collect_samples.setToolTip(
             "Stores the captured screen region and recognition result under data/recognition_samples."
         )
+        self.check_updates = QCheckBox("Check GitHub when the app starts")
+        self.check_updates.setChecked(getattr(CONFIG, "check_updates_on_startup", True))
 
         form = QFormLayout()
         form.addRow("Capture hotkey:", self.hotkey_btn)
@@ -55,6 +57,7 @@ class SettingsDialog(QDialog):
         form.addRow("Icon crop size (capture):", self.icon_crop_size)
         form.addRow("Icon size (on overlay):", self.overlay_icon_size)
         form.addRow("Capture toast position:", self.toast_position)
+        form.addRow("Updates:", self.check_updates)
         form.addRow("Diagnostics:", self.collect_samples)
 
         save_btn = QPushButton("Save")
@@ -109,5 +112,6 @@ class SettingsDialog(QDialog):
         CONFIG.set("icon_crop_size", self.icon_crop_size.value())
         CONFIG.set("overlay_icon_size", self.overlay_icon_size.value())
         CONFIG.set("toast_position", self.toast_position.currentText())
+        CONFIG.set("check_updates_on_startup", self.check_updates.isChecked())
         CONFIG.set("collect_recognition_samples", self.collect_samples.isChecked())
         CONFIG.save()

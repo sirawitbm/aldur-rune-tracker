@@ -31,6 +31,10 @@ jobs:
           python -m pip install -r requirements.txt
           python -m unittest discover -s tests -v
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
       - name: Build portable release
         shell: pwsh
         run: |
@@ -47,6 +51,7 @@ jobs:
           name: PoE2RuneTracker-v${{ env.RELEASE_VERSION }}-windows-x64
           path: |
             dist/release/*.zip
+            dist/release/*-Setup.exe
             dist/release/*.sha256
           if-no-files-found: error
 
@@ -56,5 +61,6 @@ jobs:
         with:
           files: |
             dist/release/*.zip
+            dist/release/*-Setup.exe
             dist/release/*.sha256
           generate_release_notes: true

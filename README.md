@@ -13,24 +13,34 @@ hovered slot is not passable. It does not recommend which rune to choose.
 **[Download the latest Windows release](https://github.com/sirawitbm/aldur-rune-tracker/releases/latest)**
 
 On the release page, download the file named like
-`PoE2RuneTracker-v0.1.2-windows-x64.zip`. Do not download GitHub's automatically
-generated "Source code" ZIP unless you want to run the Python source.
+`AldurRuneTracker-v0.1.2-Setup.exe`. Do not download GitHub's automatically
+generated "Source code" files unless you want to run the Python source.
 
-1. Download the portable ZIP and its matching `.sha256` file.
-2. Scan the ZIP with Microsoft Defender.
-3. Extract the entire ZIP to a folder.
-4. Open `PoE2RuneTracker.exe`. Keep the `_internal` folder beside it.
+1. Download the installer and its matching `.sha256` file.
+2. Verify the checksum and scan the installer with Microsoft Defender.
+3. Run the installer. It does not require administrator access.
+4. Start **Aldur Rune Tracker** from the Start menu.
 
-No installer, administrator access, or Python installation is required. To
-uninstall, quit the tray app and delete its folder.
+To update, quit the tracker and run the newer installer. It replaces the app
+files while preserving settings, history, positions, and learned recognition
+data. Uninstall it through Windows **Installed apps**. User data is retained in
+`%LOCALAPPDATA%\Programs\AldurRuneTracker` so an uninstall cannot erase it by
+surprise; delete that folder afterward only if you want a complete reset.
+
+### Portable version
+
+The release also includes `PoE2RuneTracker-v0.1.2-windows-x64.zip`. Extract the
+entire ZIP and keep `_internal` beside `PoE2RuneTracker.exe`. The portable and
+installed versions store data in their own folders, so they do not share
+settings automatically.
 
 ### Optional checksum verification
 
 Open PowerShell in your Downloads folder and run:
 
 ```powershell
-$actual = (Get-FileHash .\PoE2RuneTracker-v0.1.2-windows-x64.zip -Algorithm SHA256).Hash
-$expected = ((Get-Content .\PoE2RuneTracker-v0.1.2-windows-x64.zip.sha256) -split '\s+')[0]
+$actual = (Get-FileHash .\AldurRuneTracker-v0.1.2-Setup.exe -Algorithm SHA256).Hash
+$expected = ((Get-Content .\AldurRuneTracker-v0.1.2-Setup.exe.sha256) -split '\s+')[0]
 $actual -eq $expected
 ```
 
@@ -57,6 +67,11 @@ The result must be `True`.
 Right-click or double-click the notification-area icon to open **Settings**.
 Hotkeys, overlay size, and capture timing can be changed there without
 restarting the app.
+
+The tracker checks the official GitHub Releases page shortly after startup.
+When a newer version is available, choose **Open download page** or **Skip this
+version**. Automatic checks can be disabled in Settings, and **Check for
+updates...** is always available from the tray menu.
 
 The rune list is click-through while locked. Use **Unlock rune list to move
 it** in the control panel before dragging it or removing an older entry, then
@@ -103,13 +118,14 @@ app, delete `data/positions.json` beside the executable, and restart.
 
 ## Privacy and safety
 
-- The runtime makes no network requests.
+- The optional update check requests only the latest-release metadata from
+  GitHub. It does not upload settings, screenshots, history, or gameplay data.
 - Screenshots, settings, history, and learned recognition data stay in the
-  portable app folder.
+  selected app folder.
 - Accuracy-calibration screenshots are disabled by default because nearby UI
   or chat can appear in them.
-- The official release builder excludes all developer runtime data from the
-  downloadable ZIP.
+- The official release builder excludes all developer runtime data from both
+  the installer and portable ZIP.
 
 Before attaching diagnostic images to a public issue, inspect them for chat or
 other personal information.

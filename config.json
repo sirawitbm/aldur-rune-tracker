@@ -12,6 +12,8 @@
   "icon_crop_size": 60,
   "overlay_icon_size": 36,
   "toast_position": "cursor",
+  "check_updates_on_startup": true,
+  "skipped_update_version": null,
   "ocr_lang": "en",
   "data_dir": "data"
 }

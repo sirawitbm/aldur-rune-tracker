@@ -6,6 +6,7 @@ from src.resources import app_icon
 
 class TrayIcon(QSystemTrayIcon):
     settings_requested = Signal()
+    check_updates_requested = Signal()
     reset_requested = Signal()
     undo_requested = Signal()
     quit_requested = Signal()
@@ -17,6 +18,9 @@ class TrayIcon(QSystemTrayIcon):
         menu = QMenu()
         settings_action = menu.addAction("Settings...")
         settings_action.triggered.connect(self.settings_requested.emit)
+
+        update_action = menu.addAction("Check for updates...")
+        update_action.triggered.connect(self.check_updates_requested.emit)
 
         undo_action = menu.addAction("Undo last capture")
         undo_action.triggered.connect(self.undo_requested.emit)

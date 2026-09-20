@@ -26,6 +26,8 @@ DEFAULT_CONFIG = {
     "overlay_icon_size": 36,
     "toast_position": "cursor",
     "collect_recognition_samples": False,
+    "check_updates_on_startup": True,
+    "skipped_update_version": None,
     "ocr_lang": "en",
     "data_dir": "data",
 }
