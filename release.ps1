@@ -1,6 +1,7 @@
 param(
     [string]$Version = "0.1.2",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [switch]$SkipInstaller
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +15,8 @@ $releaseDir = Join-Path $PSScriptRoot "dist\release"
 $artifactName = "PoE2RuneTracker-v$Version-windows-x64"
 $zipPath = Join-Path $releaseDir "$artifactName.zip"
 $checksumPath = "$zipPath.sha256"
+$installerPath = Join-Path $releaseDir "AldurRuneTracker-v$Version-Setup.exe"
+$installerChecksumPath = "$installerPath.sha256"
 $stageRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("PoE2RuneTracker-release-" + [guid]::NewGuid())
 $stageApp = Join-Path $stageRoot $artifactName
 
@@ -76,6 +79,27 @@ try {
 
     $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
     Set-Content -Path $checksumPath -Value "$hash  $([System.IO.Path]::GetFileName($zipPath))" -Encoding ascii
+
+    if (-not $SkipInstaller) {
+        $isccCandidates = @(
+            (Get-Command ISCC.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source),
+            (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+            (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe")
+        ) | Where-Object { $_ -and (Test-Path $_) }
+        $iscc = $isccCandidates | Select-Object -First 1
+        if (-not $iscc) {
+            throw "Inno Setup 6 was not found. Install it or use -SkipInstaller for a portable-only build."
+        }
+
+        Remove-Item $installerPath, $installerChecksumPath -Force -ErrorAction SilentlyContinue
+        & $iscc "/DMyAppVersion=$Version" (Join-Path $PSScriptRoot "installer.iss")
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $installerPath)) {
+            throw "Installer build failed with exit code $LASTEXITCODE."
+        }
+        $installerHash = (Get-FileHash $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        Set-Content -Path $installerChecksumPath `
+            -Value "$installerHash  $([System.IO.Path]::GetFileName($installerPath))" -Encoding ascii
+    }
 }
 finally {
     Remove-Item $stageRoot -Recurse -Force -ErrorAction SilentlyContinue
@@ -83,3 +107,7 @@ finally {
 
 Write-Host "Release: $zipPath"
 Write-Host "SHA-256: $checksumPath"
+if (-not $SkipInstaller) {
+    Write-Host "Installer: $installerPath"
+    Write-Host "SHA-256: $installerChecksumPath"
+}

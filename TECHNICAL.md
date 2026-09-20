@@ -166,29 +166,31 @@ An available update opens a topmost prompt with **Open download page** and
 **Skip this version**. The first choice opens the repository's fixed release
 URL in the default browser; the second stores only the skipped version in
 `config.json`. A manual **Check for updates** from the tray ignores that skip.
-The portable app does not replace its own files while running.
+The app does not replace its own files while running. Download and run the new
+installer to upgrade in place without replacing folders manually.
 
 ## Running it
 
-### Download the portable release
+### Install the Windows release
 
-Download the Windows ZIP and matching `.sha256` file from the repository's
+Download the setup executable and matching `.sha256` file from the repository's
 **Releases** page. Verify it before opening:
 
 ```powershell
-Get-FileHash .\PoE2RuneTracker-v0.1.2-windows-x64.zip -Algorithm SHA256
-Get-Content .\PoE2RuneTracker-v0.1.2-windows-x64.zip.sha256
+Get-FileHash .\AldurRuneTracker-v0.1.2-Setup.exe -Algorithm SHA256
+Get-Content .\AldurRuneTracker-v0.1.2-Setup.exe.sha256
 ```
 
-The two hashes must match. Scan the ZIP with Microsoft Defender, extract the
-entire folder, and run `PoE2RuneTracker.exe`. Keep the folder together; the
-executable depends on its `_internal` directory. No Python installation or
-administrator access is required.
+The two hashes must match. Scan the installer with Microsoft Defender and run
+it. The per-user installation needs no administrator access and is placed under
+`%LOCALAPPDATA%\Programs\AldurRuneTracker`. Running a newer installer upgrades
+the app while preserving top-level `config.json` and `data` runtime state.
 
-This first release is portable rather than an installer. It writes
-`config.json` and its `data` folder beside the executable, so uninstalling is
-just quitting the tray app and deleting its folder. Back up that folder first
-if you want to retain settings or learned recognition data.
+The portable ZIP remains available. Extract the whole folder and keep
+`_internal` beside the executable. Portable state remains in that extracted
+folder and is separate from an installed copy. The Windows uninstaller leaves
+user-created config/data behind deliberately; remove the installation folder
+after uninstalling only when a complete data reset is wanted.
 
 Windows SmartScreen may warn about a new, unsigned application. The project
 does not yet have a commercial code-signing certificate. Do not disable your
@@ -224,16 +226,18 @@ Create the clean shareable ZIP and SHA-256 file:
 .\release.ps1 -Version 0.1.2
 ```
 
-Artifacts are written to `dist\release\`. The release script builds in a
-temporary staging directory and explicitly rejects top-level `config.json`
-or `data/` entries, preventing local paths, screenshots, history, learned
-aliases, and calibration samples from being shared. Do not manually zip the
-local `dist\PoE2RuneTracker` folder because that folder intentionally retains
-your runtime data.
+Artifacts are written to `dist\release\`: the installer, portable ZIP, and a
+SHA-256 file for each. Inno Setup 6 is required unless `-SkipInstaller` is
+passed. The release script stages the portable archive without top-level
+`config.json` or `data/`, while `installer.iss` excludes the same runtime paths.
+This prevents local paths, screenshots, history, learned aliases, and
+calibration samples from being shared. Do not distribute the local
+`dist\PoE2RuneTracker` folder because it intentionally retains runtime data.
 
 Pushing a semantic version tag such as `v0.1.2` runs
 `.github/workflows/release.yml`, builds on GitHub's Windows runner, uploads the
-portable archive and checksum, and creates the GitHub Release automatically.
+installer, portable archive, and checksums, and creates the GitHub Release
+automatically.
 
 ## Development workflow
 
@@ -264,9 +268,10 @@ merging, require the release/test status checks once configured, and block
 force pushes. Branch protection is a repository setting and is not changed by
 this codebase.
 
-An installer can be added later after obtaining a trusted Windows code-signing
-certificate. For v0.1.2, the transparent portable archive is the lower-risk
-way to share the app.
+The installer and application are currently unsigned, so Windows SmartScreen
+may warn before launch. SHA-256 verification establishes download integrity but
+does not replace Authenticode publisher verification. The release workflow can
+add signing later without changing the installer identity or upgrade path.
 
 ## Tuning (config.json, or Settings from the tray icon)
 
