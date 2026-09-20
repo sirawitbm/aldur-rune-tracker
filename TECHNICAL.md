@@ -11,7 +11,7 @@ contributor workflow for PoE2 Grand Expedition Rune Tracker.
   <img src="data/RA.jpg" width="180" alt="PoE2 Rune Tracker logo">
 </p>
 
-**Current release: v0.1.2 (Windows portable)**
+**Current release: v0.1.3 (Windows installer and portable ZIP)**
 
 Tracks the Aldur Runes you pick up while walking the Remnants in PoE2's
 Grand Expedition content. During the setup phase you walk to each Remnant
@@ -177,8 +177,8 @@ Download the setup executable and matching `.sha256` file from the repository's
 **Releases** page. Verify it before opening:
 
 ```powershell
-Get-FileHash .\AldurRuneTracker-v0.1.2-Setup.exe -Algorithm SHA256
-Get-Content .\AldurRuneTracker-v0.1.2-Setup.exe.sha256
+Get-FileHash .\AldurRuneTracker-v0.1.3-Setup.exe -Algorithm SHA256
+Get-Content .\AldurRuneTracker-v0.1.3-Setup.exe.sha256
 ```
 
 The two hashes must match. Scan the installer with Microsoft Defender and run
@@ -223,7 +223,7 @@ whole folder for local testing. Local rebuilds preserve `config.json` and
 Create the clean shareable ZIP and SHA-256 file:
 
 ```powershell
-.\release.ps1 -Version 0.1.2
+.\release.ps1 -Version 0.1.3
 ```
 
 Artifacts are written to `dist\release\`: the installer, portable ZIP, and a
@@ -234,7 +234,7 @@ This prevents local paths, screenshots, history, learned aliases, and
 calibration samples from being shared. Do not distribute the local
 `dist\PoE2RuneTracker` folder because it intentionally retains runtime data.
 
-Pushing a semantic version tag such as `v0.1.2` runs
+Pushing a semantic version tag such as `v0.1.3` runs
 `.github/workflows/release.yml`, builds on GitHub's Windows runner, uploads the
 installer, portable archive, and checksums, and creates the GitHub Release
 automatically.
@@ -259,8 +259,8 @@ README, merge that release PR, then tag the merge commit:
 ```powershell
 git switch main
 git pull --ff-only
-git tag -a v0.1.2 -m "PoE2 Rune Tracker v0.1.2"
-git push origin v0.1.2
+git tag -a v0.1.3 -m "PoE2 Rune Tracker v0.1.3"
+git push origin v0.1.3
 ```
 
 In GitHub repository settings, protect `main`: require a pull request before
